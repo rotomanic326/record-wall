@@ -1,0 +1,64 @@
+{
+  "layout": "depth",
+  "theme": "dark",
+  "autorotate": true,
+  "switcher": true,
+  "themeSwitch": true,
+  "tilt": 1,
+  "covers": [
+    {
+      "src": "covers/01.jpg",
+      "title": "Chemtrail Surfers",
+      "artist": "YOTTO",
+      "year": "2026",
+      "label": "Label",
+      "client": "Client",
+      "link": ""
+    },
+    {
+      "src": "covers/02.jpg",
+      "title": "Monaco",
+      "artist": "3 Ride",
+      "year": "2026",
+      "label": "Label",
+      "client": "Client",
+      "link": ""
+    },
+    {
+      "src": "covers/03.jpg",
+      "title": "Title",
+      "artist": "Perfecto Allstarz",
+      "year": "2026",
+      "label": "Label",
+      "client": "Client",
+      "link": ""
+    },
+    {
+      "src": "covers/04.jpg",
+      "title": "The World Keeps Turning",
+      "artist": "Nox Vahn",
+      "year": "2026",
+      "label": "Label",
+      "client": "Client",
+      "link": ""
+    },
+    {
+      "src": "covers/05.jpg",
+      "title": "Title",
+      "artist": "Artist",
+      "year": "2026",
+      "label": "Label",
+      "client": "Client",
+      "link": ""
+    },
+    {
+      "src": "covers/06.jpg",
+      "title": "Somebody To Love",
+      "artist": "Artist",
+      "year": "2026",
+      "label": "Label",
+      "client": "Client",
+      "link": ""
+    }
+  ]
+}

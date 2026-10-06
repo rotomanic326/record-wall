@@ -2,6 +2,7 @@
    RecordWall.mount(element, options) */
 (function () {
   if (window.RecordWall) return;
+  var BASE = ((document.currentScript && document.currentScript.src) || '').replace(/[^\/]*$/, '');
   var CSS = '\
 .rw{transition:background-color .5s;position:relative;width:100%;height:100vh;min-height:480px;overflow:hidden;background:var(--rw-bg);color:var(--rw-fg);font-family:"Archivo",system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}\
 .rw,.rw[data-theme=dark]{--rw-bg:#000;--rw-fg:#f3f2f2;--rw-sub:#9b9795;--rw-rule:rgba(243,242,242,.2);--rw-ph:#141414;--rw-ph2:#1b1b1b;--rw-sh:rgba(0,0,0,.6);--rw-veil:rgba(0,0,0,.84);--rw-acc:#ec3013}\
@@ -345,7 +346,16 @@
     if (d.themeSwitch) c.themeSwitch = d.themeSwitch !== 'false';
     return c;
   }
-  var autoInst = null, autoEl = null, autoCovers = null;
+  var autoInst = null, autoEl = null, autoCovers = null, jsonCfg = null, jsonReq = null;
+  function loadJSON(url) {
+    if (!jsonReq) jsonReq = fetch(url, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); }).then(function (j) {
+      var list = Array.isArray(j) ? j : (j.covers || []);
+      var base = url.replace(/[^\/]*$/, '');
+      list.forEach(function (c) { if (c.src && !/^(https?:)?\/\//.test(c.src) && c.src.indexOf('data:') !== 0) c.src = base + c.src.replace(/^\.\//, ''); });
+      jsonCfg = Array.isArray(j) ? {} : j; jsonCfg.covers = list; return jsonCfg;
+    }).catch(function (e) { console.warn('[RecordWall] could not load covers list', url, e); jsonCfg = {}; return jsonCfg; });
+    return jsonReq;
+  }
   function auto(selector, cfg) {
     selector = selector || '#record-wall';
     function check() {
@@ -353,9 +363,12 @@
       if (autoInst && (!autoEl || !autoEl.isConnected || autoEl !== el)) { try { autoInst.destroy(); } catch (_) {} autoInst = null; autoEl = null; }
       if (el && (!autoInst || !el.querySelector('.rw-stage') || !el.classList.contains('rw'))) {
         var found = readCovers(el); if (found.length) autoCovers = found;
+        var src = el.getAttribute('data-covers') || (BASE ? BASE + 'covers.json' : '');
+        if (!autoCovers && src && !jsonCfg) { loadJSON(src).then(schedule); return; }
         if (autoInst) { try { autoInst.destroy(); } catch (_) {} }
         autoEl = el;
-        autoInst = mount(el, Object.assign({}, cfg || {}, readConfig(el), autoCovers ? { covers: autoCovers } : {}));
+        var j = jsonCfg || {};
+        autoInst = mount(el, Object.assign({}, cfg || {}, j, readConfig(el), { covers: autoCovers || j.covers || [] }));
       }
     }
     var pending = 0;
