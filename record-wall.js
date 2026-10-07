@@ -3,6 +3,12 @@
 (function () {
   if (window.RecordWall) return;
   var BASE = ((document.currentScript && document.currentScript.src) || '').replace(/[^\/]*$/, '');
+  function findBase() {
+    if (BASE) return BASE;
+    var ss = document.querySelectorAll('script[src*="record-wall"]');
+    for (var i = 0; i < ss.length; i++) if (/record-wall(\.min)?\.js/.test(ss[i].src)) return (BASE = ss[i].src.split('?')[0].replace(/[^\/]*$/, ''));
+    return '';
+  }
   var CSS = '\
 .rw{transition:background-color .5s;position:relative;width:100%;height:100vh;min-height:480px;overflow:hidden;background:var(--rw-bg);color:var(--rw-fg);font-family:"Archivo",system-ui,sans-serif;-webkit-font-smoothing:antialiased;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}\
 .rw,.rw[data-theme=dark]{--rw-bg:#000;--rw-fg:#f3f2f2;--rw-sub:#9b9795;--rw-rule:rgba(243,242,242,.2);--rw-ph:#141414;--rw-ph2:#1b1b1b;--rw-sh:rgba(0,0,0,.6);--rw-veil:rgba(0,0,0,.84);--rw-acc:#ec3013}\
@@ -272,17 +278,18 @@
       if (openI < 0) return;
       if (e.key === 'Escape') close(); else if (e.key === 'ArrowRight') go(1); else if (e.key === 'ArrowLeft') go(-1);
     }
-    function setLayout(l) {
-      if (l === mode && built) return;
-      mode = l; cur.x = cur.y = tgt.x = tgt.y = vel.x = vel.y = 0;
-      function setTheme(t) {
+    function setTheme(t) {
       theme = t; root.setAttribute('data-theme', t);
+      root.style.setProperty('background', t === 'light' ? '#fff' : '#000', 'important');
       root.querySelectorAll('.rw-theme .rw-btn').forEach(function (b) { b.classList.toggle('is-on', b.dataset.t === t); });
       if (o.onTheme) o.onTheme(t);
     }
     root.querySelectorAll('.rw-theme .rw-btn').forEach(function (b) { b.addEventListener('click', function () { setTheme(b.dataset.t); }); });
     setTheme(theme);
-    root.querySelectorAll('.rw-switch .rw-btn').forEach(function (b) { b.classList.toggle('is-on', b.dataset.l === mode); });
+    function setLayout(l) {
+      if (l === mode && built) return;
+      mode = l; cur.x = cur.y = tgt.x = tgt.y = vel.x = vel.y = 0;
+      root.querySelectorAll('.rw-switch .rw-btn').forEach(function (b) { b.classList.toggle('is-on', b.dataset.l === mode); });
       build(true);
     }
 
@@ -353,7 +360,7 @@
       var base = url.replace(/[^\/]*$/, '');
       list.forEach(function (c) { if (c.src && !/^(https?:)?\/\//.test(c.src) && c.src.indexOf('data:') !== 0) c.src = base + c.src.replace(/^\.\//, ''); });
       jsonCfg = Array.isArray(j) ? {} : j; jsonCfg.covers = list; return jsonCfg;
-    }).catch(function (e) { console.warn('[RecordWall] could not load covers list', url, e); jsonCfg = {}; return jsonCfg; });
+    }).catch(function (e) { console.warn('[RecordWall] could not load covers list', url, e); jsonReq = null; jsonCfg = {}; return jsonCfg; });
     return jsonReq;
   }
   function auto(selector, cfg) {
@@ -363,7 +370,8 @@
       if (autoInst && (!autoEl || !autoEl.isConnected || autoEl !== el)) { try { autoInst.destroy(); } catch (_) {} autoInst = null; autoEl = null; }
       if (el && (!autoInst || !el.querySelector('.rw-stage') || !el.classList.contains('rw'))) {
         var found = readCovers(el); if (found.length) autoCovers = found;
-        var src = el.getAttribute('data-covers') || (BASE ? BASE + 'covers.json' : '');
+        var b = findBase(), src = el.getAttribute('data-covers') || window.RECORD_WALL_COVERS || (b ? b + 'covers.json' : '');
+        if (!src && !autoCovers) console.warn('[RecordWall] could not work out where covers.json is — add data-covers="…" to the div');
         if (!autoCovers && src && !jsonCfg) { loadJSON(src).then(schedule); return; }
         if (autoInst) { try { autoInst.destroy(); } catch (_) {} }
         autoEl = el;
