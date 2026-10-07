@@ -353,14 +353,27 @@
     if (d.themeSwitch) c.themeSwitch = d.themeSwitch !== 'false';
     return c;
   }
-  var autoInst = null, autoEl = null, autoCovers = null, jsonCfg = null, jsonReq = null;
+  var REPO = 'rotomanic326/record-wall';
+  var SOURCES = ['https://cdn.jsdelivr.net/gh/' + REPO + '@main/covers.json', 'https://raw.githubusercontent.com/' + REPO + '/main/covers.json'];
+  var autoInst = null, autoEl = null, autoCovers = null, jsonCfg = null, jsonReq = null, loadErr = '';
+  function fetchFirst(urls) {
+    var i = 0, errs = [];
+    function next() {
+      if (i >= urls.length) return Promise.reject(errs.join(' | '));
+      var u = urls[i++];
+      return fetch(u + (u.indexOf('?') < 0 ? '?t=' : '&t=') + Date.now()).then(function (r) { if (!r.ok) throw r.status; return r.json().then(function (j) { return { j: j, url: u }; }); })
+        .catch(function (e) { errs.push(u + ' → ' + e); return next(); });
+    }
+    return next();
+  }
   function loadJSON(url) {
-    if (!jsonReq) jsonReq = fetch(url, { cache: 'no-cache' }).then(function (r) { if (!r.ok) throw r.status; return r.json(); }).then(function (j) {
+    var urls = [url].concat(SOURCES).filter(function (u, k, a) { return u && a.indexOf(u) === k; });
+    if (!jsonReq) jsonReq = fetchFirst(urls).then(function (res) { var j = res.j; url = res.url;
       var list = Array.isArray(j) ? j : (j.covers || []);
       var base = url.replace(/[^\/]*$/, '');
       list.forEach(function (c) { if (c.src && !/^(https?:)?\/\//.test(c.src) && c.src.indexOf('data:') !== 0) c.src = base + c.src.replace(/^\.\//, ''); });
       jsonCfg = Array.isArray(j) ? {} : j; jsonCfg.covers = list; return jsonCfg;
-    }).catch(function (e) { console.warn('[RecordWall] could not load covers list', url, e); jsonReq = null; jsonCfg = {}; return jsonCfg; });
+    }).catch(function (e) { loadErr = String(e); console.warn('[RecordWall] could not load covers list', e); jsonCfg = {}; return jsonCfg; });
     return jsonReq;
   }
   function auto(selector, cfg) {
@@ -371,12 +384,12 @@
       if (el && (!autoInst || !el.querySelector('.rw-stage') || !el.classList.contains('rw'))) {
         var found = readCovers(el); if (found.length) autoCovers = found;
         var b = findBase(), src = el.getAttribute('data-covers') || window.RECORD_WALL_COVERS || (b ? b + 'covers.json' : '');
-        if (!src && !autoCovers) console.warn('[RecordWall] could not work out where covers.json is — add data-covers="…" to the div');
-        if (!autoCovers && src && !jsonCfg) { loadJSON(src).then(schedule); return; }
+        if (!autoCovers && !jsonCfg) { loadJSON(src).then(schedule); return; }
         if (autoInst) { try { autoInst.destroy(); } catch (_) {} }
         autoEl = el;
         var j = jsonCfg || {};
         autoInst = mount(el, Object.assign({}, cfg || {}, j, readConfig(el), { covers: autoCovers || j.covers || [] }));
+        if (loadErr) { var m = document.createElement('div'); m.style.cssText = 'position:absolute;z-index:9;left:14px;top:14px;right:14px;font:12px/1.4 ui-monospace,Menlo,monospace;color:#ec3013'; m.textContent = 'Covers list failed to load: ' + loadErr; el.appendChild(m); }
       }
     }
     var pending = 0;

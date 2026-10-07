@@ -7,12 +7,12 @@
   "tilt": 1,
   "covers": [
     {
-      "src": "https://freight.cargo.site/w/2000/q/75/i/M3054639219314325113118672334158/YOTTO_Chemtrail_Surfers_Cover.jpg",
+      "src": "covers/01.jpg",
       "title": "Chemtrail Surfers",
       "artist": "YOTTO",
       "year": "2026",
-      "label": "Odd One Out",
-      "client": "OOO",
+      "label": "Label",
+      "client": "Client",
       "link": ""
     },
     {
