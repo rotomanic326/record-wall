@@ -276,7 +276,11 @@
     }
     function onKey(e) {
       if (openI < 0) return;
-      if (e.key === 'Escape') close(); else if (e.key === 'ArrowRight') go(1); else if (e.key === 'ArrowLeft') go(-1);
+      var k = e.key;
+      if (k !== 'Escape' && k !== 'ArrowRight' && k !== 'ArrowLeft' && k !== 'ArrowUp' && k !== 'ArrowDown' && k !== ' ' && k !== 'PageUp' && k !== 'PageDown') return;
+      e.preventDefault(); e.stopPropagation(); if (e.stopImmediatePropagation) e.stopImmediatePropagation();
+      if (e.type !== 'keydown') return;
+      if (k === 'Escape') close(); else if (k === 'ArrowRight') go(1); else if (k === 'ArrowLeft') go(-1);
     }
     function setTheme(t) {
       theme = t; root.setAttribute('data-theme', t);
@@ -300,7 +304,8 @@
     window.addEventListener('pointercancel', onUp);
     root.addEventListener('pointerleave', onLeave);
     root.addEventListener('wheel', onWheel, { passive: false });
-    window.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
+    window.addEventListener('keyup', onKey, true);
     q('.rw-veil').addEventListener('click', close);
     q('.rw-close').addEventListener('click', close);
     q('.rw-prev').addEventListener('click', function () { go(-1); });
@@ -323,7 +328,7 @@
       destroy: function () {
         cancelAnimationFrame(raf); built = false;
         window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp);
-        window.removeEventListener('pointercancel', onUp); window.removeEventListener('keydown', onKey);
+        window.removeEventListener('pointercancel', onUp); window.removeEventListener('keydown', onKey, true); window.removeEventListener('keyup', onKey, true);
         document.removeEventListener('visibilitychange', onVis);
         ro.disconnect(); if (io) io.disconnect();
         root.innerHTML = ''; root.classList.remove('rw', 'is-open', 'is-touched', 'rw-intro'); root.__rw = null;
