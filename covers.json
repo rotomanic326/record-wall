@@ -68,6 +68,15 @@
       "label": "Wichita",
       "client": "Wichita Records",
       "link": ""
+    },
+    {
+    "src": "covers/28.jpg",
+      "title": "Summer & Smoke",
+      "artist": "Cubicolor",
+      "year": "2023",
+      "label": "Anjunadeep",
+      "client": "Anjunadeep",
+      "link": ""
     }
   ]
 }
