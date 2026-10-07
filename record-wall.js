@@ -371,9 +371,18 @@
     }
     return next();
   }
+  function latestSha() {
+    return fetch('https://api.github.com/repos/' + REPO + '/commits/main', { headers: { Accept: 'application/vnd.github.sha' } })
+      .then(function (r) { if (!r.ok) throw r.status; return r.text(); })
+      .then(function (t) { t = t.trim(); if (!/^[0-9a-f]{40}$/.test(t)) throw 'bad sha'; return t; })
+      .catch(function () { return ''; });
+  }
   function loadJSON(url) {
-    var urls = [url].concat(SOURCES).filter(function (u, k, a) { return u && a.indexOf(u) === k; });
-    if (!jsonReq) jsonReq = fetchFirst(urls).then(function (res) { var j = res.j; url = res.url;
+    if (!jsonReq) jsonReq = latestSha().then(function (sha) {
+      var fresh = sha ? ['https://cdn.jsdelivr.net/gh/' + REPO + '@' + sha + '/covers.json', 'https://raw.githubusercontent.com/' + REPO + '/' + sha + '/covers.json'] : [];
+      var urls = fresh.concat(['https://raw.githubusercontent.com/' + REPO + '/main/covers.json', url], SOURCES).filter(function (u, k, a) { return u && a.indexOf(u) === k; });
+      return fetchFirst(urls);
+    }).then(function (res) { var j = res.j; url = res.url;
       var list = Array.isArray(j) ? j : (j.covers || []);
       var base = url.replace(/[^\/]*$/, '');
       list.forEach(function (c) { if (c.src && !/^(https?:)?\/\//.test(c.src) && c.src.indexOf('data:') !== 0) c.src = base + c.src.replace(/^\.\//, ''); });
